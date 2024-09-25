@@ -111,9 +111,88 @@ if __name__ == "__main__":
     httpd.serve_forever()
 }
 
-CSRF
+HTTP host header
 {
 Attack:
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+class HostHeaderVulnerableServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+        # Trust the Host header from the incoming request
+        host = self.headers.get('Host')
+        
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+
+        if self.path == '/reset-password':
+            # Construct a password reset link using the Host header
+            reset_link = f"http://{host}/reset-confirm?token=abc123"
+            response = f"""
+            <html>
+                <body>
+                    <h1>Password Reset</h1>
+                    <p>Click <a href="{reset_link}">here</a> to reset your password.</p>
+                </body>
+            </html>
+            """
+        else:
+            response = "<html><body><h1>Welcome to the vulnerable server!</h1></body></html>"
+
+        self.wfile.write(response.encode('utf-8'))
+
+if __name__ == "__main__":
+    server_address = ('', 8080)
+    httpd = HTTPServer(server_address, HostHeaderVulnerableServer)
+    print("Starting vulnerable server at http://localhost:8080")
+    httpd.serve_forever()
+
 
 Def:
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+# Define a whitelist of trusted hostnames
+ALLOWED_HOSTS = ['localhost:8080', '127.0.0.1:8080']
+
+class HostHeaderSecureServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+        # Extract the Host header
+        host = self.headers.get('Host')
+
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+
+        # Validate the Host header against the whitelist
+        if host not in ALLOWED_HOSTS:
+            response = f"""
+            <html>
+                <body>
+                    <h1>Invalid Host Header</h1>
+                    <p>Access denied: The Host header <strong>{host}</strong> is not allowed.</p>
+                </body>
+            </html>
+            """
+        elif self.path == '/reset-password':
+            # Construct a password reset link using a valid Host header
+            reset_link = f"http://{host}/reset-confirm?token=abc123"
+            response = f"""
+            <html>
+                <body>
+                    <h1>Password Reset</h1>
+                    <p>Click <a href="{reset_link}">here</a> to reset your password.</p>
+                </body>
+            </html>
+            """
+        else:
+            response = "<html><body><h1>Welcome to the secure server!</h1></body></html>"
+
+        self.wfile.write(response.encode('utf-8'))
+
+if __name__ == "__main__":
+    server_address = ('', 8080)
+    httpd = HTTPServer(server_address, HostHeaderSecureServer)
+    print("Starting secure server at http://localhost:8080")
+    httpd.serve_forever()
+
 }
