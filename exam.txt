@@ -273,3 +273,50 @@ if __name__ == "__main__":
 
 
 }
+class ShoppingCart:
+    def __init__(self):
+        self.cart = {}  # Holds item and quantity
+        self.paid_for = {}  # Holds paid items and quantities
+    
+    def add_item(self, item, quantity):
+        if item in self.cart:
+            self.cart[item] += quantity
+        else:
+            self.cart[item] = quantity
+        print(f"Added {quantity} {item}(s) to the cart.")
+
+    def view_cart(self):
+        print("Current cart contents:")
+        for item, quantity in self.cart.items():
+            print(f"{item}: {quantity}")
+    
+    def pay(self):
+        self.paid_for = self.cart.copy()  # Simulate paying for the cart
+        print(f"Paid for {self.paid_for}")
+        self.cart = {}  # Clear cart after payment
+    
+    def add_after_payment(self, item, quantity):
+        if item in self.paid_for:
+            self.paid_for[item] += quantity
+        else:
+            self.paid_for[item] = quantity
+        print(f"Added {quantity} {item}(s) to the paid order after payment!")
+    
+    def finalize_order(self):
+        print(f"Final order contains: {self.paid_for}")
+    
+# Simulating the business logic flaw
+cart = ShoppingCart()
+
+# Adding initial items to the cart
+cart.add_item('tshirt', 3)
+cart.view_cart()
+
+# Paying for the items
+cart.pay()
+
+# Adding more items after the payment (the flaw)
+cart.add_after_payment('tshirt', 2)
+
+# Finalizing the order (shows 3+2 tshirts while only paying for 3)
+cart.finalize_order()
