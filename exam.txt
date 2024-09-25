@@ -113,6 +113,8 @@ if __name__ == "__main__":
 
 HTTP host header
 {
+curl -H "Host: attacker.com" "http://localhost:8080/reset-password"
+
 Attack:
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
