@@ -198,3 +198,78 @@ if __name__ == "__main__":
     httpd.serve_forever()
 
 }
+
+Clickjacking
+{
+Attack:
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+class ClickjackingVulnerableServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+
+        response = """
+        <html>
+            <body>
+                <h1>Welcome to the vulnerable server!</h1>
+                <p>This site is vulnerable to clickjacking attacks because it can be embedded in an iframe.</p>
+                <button onclick="alert('Button clicked!')">Click Me</button>
+            </body>
+        </html>
+        """
+        self.wfile.write(response.encode('utf-8'))
+
+if __name__ == "__main__":
+    server_address = ('', 8080)
+    httpd = HTTPServer(server_address, ClickjackingVulnerableServer)
+    print("Starting vulnerable server at http://localhost:8080")
+    httpd.serve_forever()
+
+    HTML CODE:
+    {
+             <!-- attacker_page.html -->
+            <!DOCTYPE html>
+            <html>
+                <body>
+                    <h1>This is the attacker-controlled page</h1>
+                    <p>Click the button below:</p>
+                    <iframe src="http://localhost:8080" width="800" height="600" style="opacity: 0.5; position: absolute; top: 0; left: 0;"></iframe>
+                    <button style="position: relative; z-index: 2;">Click Me</button>
+                </body>
+            </html>
+    }
+
+Def:
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+class ClickjackingSecureServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        # Mitigate clickjacking by setting X-Frame-Options header
+        self.send_header('X-Frame-Options', 'DENY')  # Prevent embedding in any iframe
+        # Alternative approach: using Content Security Policy (CSP)
+        # self.send_header('Content-Security-Policy', "frame-ancestors 'none';")
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+
+        response = """
+        <html>
+            <body>
+                <h1>Welcome to the secure server!</h1>
+                <p>This site is protected from clickjacking attacks.</p>
+                <button onclick="alert('Button clicked!')">Click Me</button>
+            </body>
+        </html>
+        """
+        self.wfile.write(response.encode('utf-8'))
+
+if __name__ == "__main__":
+    server_address = ('', 8080)
+    httpd = HTTPServer(server_address, ClickjackingSecureServer)
+    print("Starting secure server at http://localhost:8080")
+    httpd.serve_forever()
+
+
+}
